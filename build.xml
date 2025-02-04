@@ -26,6 +26,15 @@
     </javac>
   </target>
 
+  <target name="plugins" description="compile-plugins">
+    <javac srcdir="./customPlugins" destdir="./plugins" optimize="on" source="1.6" target="1.6" debug="on" includeantruntime="false" encoding="utf-8">
+      <classpath>
+        <pathelement path="${build.dir}" />
+      </classpath>
+    </javac>
+    <java maxmemory="640m" jar="${jarfile}" fork="yes" />
+  </target>
+
   <target name="build" depends="compile-plugins" description="Build ij.jar.">
     <!-- Copy needed files into the build directory. -->
     <copy file="IJ_Props.txt" todir="${build.dir}" />
