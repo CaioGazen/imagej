@@ -2,7 +2,7 @@ import ij.*;
 import ij.plugin.PlugIn;
 import ij.process.ImageProcessor;
 import ij.process.ColorProcessor;
-import ij.gui.ImageWindow;
+import ij.gui.*;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -14,22 +14,45 @@ public class Combine_channels_ implements PlugIn {
             return;
         }
 
-        List<ImagePlus> images = new ArrayList();
-        for (int id : ids) {
-            ImagePlus img = WindowManager.getImage(id);
-            if (img != null && img.getType() == ImagePlus.GRAY8) {
-                images.add(img);
-            }
+        String[] imageTitles = new String[ids.length];
+
+        for (int i = 0; i < ids.length; i++) {
+            ImagePlus imp = WindowManager.getImage(ids[i]);
+            imageTitles[i] = imp.getTitle();
         }
 
-        if (images.size() != 3) {
-            IJ.error("As imagens precisam ser em escala de cinza (8-bits)");
+        GenericDialog gd = new GenericDialog("Choose an Image");
+        gd.addChoice("Image: Red:", imageTitles, imageTitles[0]); // Default selection
+        gd.addChoice("Image: Green", imageTitles, imageTitles[0]); // Default selection
+        gd.addChoice("Image: Blue", imageTitles, imageTitles[0]); // Default selection
+        gd.showDialog();
+
+        if (gd.wasCanceled()) {
             return;
         }
 
-        ImagePlus image_Red = images.get(0);
-        ImagePlus image_Green = images.get(1);
-        ImagePlus image_Blue = images.get(2);
+        String title_Red = gd.getNextChoice();
+        String title_Green = gd.getNextChoice();
+        String title_Blue = gd.getNextChoice();
+
+        ImagePlus image_Red = null;
+        ImagePlus image_Green = null;
+        ImagePlus image_Blue = null;
+
+        for (int i = 0; i < ids.length; i++) {
+            ImagePlus imp = WindowManager.getImage(ids[i]);
+            if (imp.getTitle().equals(title_Red)) {
+                image_Red = imp;
+            }
+            if (imp.getTitle().equals(title_Green)) {
+                image_Green = imp;
+            }
+            if (imp.getTitle().equals(title_Blue)) {
+                image_Blue = imp;
+            }
+        }
+
+        
 
         int width = image_Red.getWidth();
         int height = image_Red.getHeight();
