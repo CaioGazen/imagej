@@ -37,8 +37,6 @@ public class RGB_To_Grayscale_ implements PlugIn {
         String answer = gd.getNextRadioButton();
         Boolean createNewImage = gd.getNextBoolean();
 
-        IJ.error(answer);
-
         ConversionMethods method = this::rgb_average;
 
         switch (answer) {
