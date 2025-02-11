@@ -46,10 +46,10 @@ public class RGB_To_Grayscale_ implements PlugIn {
             method = this::rgb_average;
             break;
           case "Weighted Average":
-            method = this::rgb_weighted_average;
+            method = this::rgb_luminance;
             break;
           case "Luminance":
-            method = this::rgb_luminance;
+            method = this::rgb_luminance_digital;
             break;
           default:
             break;
@@ -62,7 +62,7 @@ public class RGB_To_Grayscale_ implements PlugIn {
 
         ImageProcessor processor = image.getProcessor();
 
-        ImageProcessor processor_grayscale = method.method(image.getProcessor(), width, height);
+        ImageProcessor processor_grayscale = method.conversion(image.getProcessor(), width, height);
         
         if(createNewImage){
             ImagePlus image_new = new ImagePlus("Grayscale", processor_grayscale);
@@ -92,12 +92,18 @@ public class RGB_To_Grayscale_ implements PlugIn {
     }
     
     public int luminance(int[] rgb){
+      double Yd = rgb[0] * 0.299 + rgb[1] * 0.587 + rgb[2] * 0.0114;
+      int Y = (int)Math.round(Yd);
+      return Y;
+    }
+
+    public int luminance_digital(int[] rgb){
       double Yd = rgb[0] * 0.2125 + rgb[1] * 0.7154 + rgb[2] * 0.0721;
       int Y = (int)Math.round(Yd);
       return Y;
     }
 
-    public ImageProcessor rgb_weighted_average(ImageProcessor processor, int width, int height){
+    public ImageProcessor rgb_luminance(ImageProcessor processor, int width, int height){
 
         ImageProcessor processor_grayscale = new ByteProcessor(width, height);
 
@@ -113,17 +119,16 @@ public class RGB_To_Grayscale_ implements PlugIn {
       return processor_grayscale;
     }
 
-    public ImageProcessor rgb_luminance(ImageProcessor processor, int width, int height){
+    public ImageProcessor rgb_luminance_digital(ImageProcessor processor, int width, int height){
 
-        ImageProcessor processor_grayscale = new ColorProcessor(width, height);
+        ImageProcessor processor_grayscale = new ByteProcessor(width, height);
 
         for (int x = 0; x < width; x++){
             for (int y = 0; y < height; y++){
                 int[] rgb = new int[3];
                 processor.getPixel(x, y, rgb);
-                int Y = luminance(rgb);
-                rgb[0] = rgb[1] = rgb[2] = Y;
-                processor_grayscale.putPixel(x, y, rgb);
+                int Y = luminance_digital(rgb);
+                processor_grayscale.putPixel(x, y, Y);
             }
         }
 
@@ -132,6 +137,6 @@ public class RGB_To_Grayscale_ implements PlugIn {
 
     private interface ConversionMethods {
      
-      ImageProcessor method(ImageProcessor processor, int width, int height);
+      ImageProcessor conversion(ImageProcessor processor, int width, int height);
     }
 }
