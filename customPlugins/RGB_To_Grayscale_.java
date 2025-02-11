@@ -26,6 +26,7 @@ public class RGB_To_Grayscale_ implements PlugIn {
         gd.addChoice("Image", imageTitles, imageTitles[0]);
         String[] items = {"Average", "Weighted Average", "Luminance"};
         gd.addRadioButtonGroup("Test", items, 3, 1, "0");
+        gd.addCheckbox("Create new image", false);
         gd.showDialog();
 
         if (gd.wasCanceled()) {
@@ -34,6 +35,7 @@ public class RGB_To_Grayscale_ implements PlugIn {
 
         String title = gd.getNextChoice();
         String answer = gd.getNextRadioButton();
+        Boolean createNewImage = gd.getNextBoolean();
 
         IJ.error(answer);
 
@@ -61,9 +63,15 @@ public class RGB_To_Grayscale_ implements PlugIn {
         ImageProcessor processor = image.getProcessor();
 
         ImageProcessor processor_grayscale = method.method(image.getProcessor(), width, height);
-
-        ImagePlus image_temp = new ImagePlus("Grayscale", processor_grayscale);
-        new ImageWindow(image_temp);
+        
+        if(createNewImage){
+            ImagePlus image_new = new ImagePlus("Grayscale", processor_grayscale);
+            new ImageWindow(image_new);
+        }
+        else{
+            image.setProcessor(processor_grayscale);
+            image.updateAndDraw();
+        }
       
     }
 
@@ -85,7 +93,7 @@ public class RGB_To_Grayscale_ implements PlugIn {
     
     public int luminance(int[] rgb){
       double Yd = rgb[0] * 0.2125 + rgb[1] * 0.7154 + rgb[2] * 0.0721;
-      int Y = (int)Math.round(Yd);;
+      int Y = (int)Math.round(Yd);
       return Y;
     }
 
