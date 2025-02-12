@@ -37,20 +37,24 @@ public class RGB_To_Grayscale_ implements PlugIn {
         String answer = gd.getNextRadioButton();
         Boolean createNewImage = gd.getNextBoolean();
 
-        ConversionMethods method = this::rgb_average;
+        ConversionMethods method = null;
 
         switch (answer) {
           case "Average":
             method = this::rgb_average;
             break;
+
           case "Weighted Average":
             method = this::rgb_luminance;
             break;
+
           case "Luminance":
             method = this::rgb_luminance_digital;
             break;
+
           default:
             break;
+
         }
 
         ImagePlus image = WindowManager.getImage(title);
