@@ -75,66 +75,8 @@ public class Histogram_equalization_ implements PlugIn {
     }
 
   }
-
-  public int[] computeHistogram(ImageProcessor processor) {
-    int[] histogram = new int[256];
-    for (int y = 0; y < this.height; y++) {
-      for (int x = 0; x < this.width; x++) {
-        int value = processor.getPixel(x, y);
-        histogram[value]++;
-      }
-    }
-    return histogram;
-  }
-
-  public int[] lowHigh(int[] histogram) {
-    int low = 0;
-    int high = 255;
-    for (int i = 0; i < 256; i++) {
-      if (histogram[i] > 0) {
-        low = i;
-        break;
-      }
-    }
-    for (int i = 255; i >= 0; i--) {
-      if (histogram[i] > 0) {
-        high = i;
-        break;
-      }
-    }
-    return new int[] {low, high};
-  }
-
-  public void expandHistogram(int min, int max, int low, int high, int[] histogram, ImageProcessor processor) {
-    int range = max - min;
-    int newRange = high - low;
+  public void lowPass(ImageProcessor processor, int[][] kernel){
     
-    for (int y = 0; y < this.height; y++) {
-      for (int x = 0; x < this.width; x++) {
-        int value = processor.getPixel(x, y);
-        int newValue = min + (value - low) * (range / newRange);
-        processor.putPixel(x, y, newValue);
-      }
-    }
   }
-
-  public void equalizeHistogram(int max, int[] histogram, ImageProcessor processor) {
-    float MN = this.width * this.height;
-    int[] newHistogram = new int[256];
-    float probabilitySum = 0;
-
-    for(int i = 0; i < 256; i++){
-      probabilitySum += ((histogram[i]) / MN);
-      newHistogram[i] = Math.round((max * probabilitySum));
-    }
-    
-    for (int y = 0; y < this.height; y++) {
-      for (int x = 0; x < this.width; x++) {
-        int value = processor.getPixel(x, y);
-        int newValue = newHistogram[value];
-        processor.putPixel(x, y, newValue);
-      }
-    }
   }
-}
 
