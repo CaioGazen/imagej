@@ -8,7 +8,7 @@ import java.util.List;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 
-public class Histogram_equalization_ implements PlugIn {
+public class Linear_Filters_ implements PlugIn {
   private int height;
   private int width;
 
@@ -28,7 +28,7 @@ public class Histogram_equalization_ implements PlugIn {
 
     GenericDialog gd = new GenericDialog("Choose an Image");
     gd.addChoice("Image", imageTitles, imageTitles[0]);
-    String[] items = {"Expand Histogram", "Equalize Histogram"};
+    String[] items = {"LowPass mean", "highPass","border south"};
     gd.addRadioButtonGroup("Test", items, 3, 1, "0");
     gd.addCheckbox("Create new image", false);
     gd.showDialog();
@@ -49,18 +49,25 @@ public class Histogram_equalization_ implements PlugIn {
     ImageProcessor processor = image.getProcessor();
     ImageProcessor newProcessor = processor.duplicate();
 
-    int[] histogram = computeHistogram(newProcessor);
-    int[] lowHigh = lowHigh(histogram);
 
     switch (answer) {
-      case "Expand Histogram":
-        expandHistogram(0, 255, lowHigh[0], lowHigh[1], histogram, newProcessor);
+      case "LowPass mean":
+        int[][] kernel = {{1, 1, 1}, {1, 1, 1}, {1, 1, 1}};
+        newProcessor = applyKernel(newProcessor, kernel, 9);
         break;
 
-      case "Equalize Histogram":
-        equalizeHistogram(255, histogram, newProcessor);
+      case "highPass":
+        int[][] kernelhigh = {{0, -1, 0},
+                             {-1, 5, -1},
+                             {0, -1, 0}};
+        newProcessor = applyKernel(newProcessor, kernelhigh, 1);
         break;
 
+      case "border south":
+        int[][] kernelSouth = {{-1, -1, -1},
+                               {1, -2, 1},
+                               {1, 1, 1}};
+        newProcessor = applyKernel(newProcessor, kernelSouth, 1);
       default:
         break;
     }
@@ -75,8 +82,25 @@ public class Histogram_equalization_ implements PlugIn {
     }
 
   }
-  public void lowPass(ImageProcessor processor, int[][] kernel){
-    
+
+  public ImageProcessor applyKernel(ImageProcessor processor, int[][] kernel, int kernelDivisor){
+    int kernelOffset = ((kernel.length - 1) / 2);
+    ImageProcessor newProcessor = new ByteProcessor(this.width, this.height);
+    for(int y = kernelOffset; y < this.height - kernelOffset; y++){
+      for(int x = kernelOffset; x < this.width - kernelOffset; x++){
+        int sum = 0;
+        for(int ky = -kernelOffset; ky <= kernelOffset; ky++){
+          for(int kx = -kernelOffset; kx <= kernelOffset; kx++){
+            int pixel = processor.getPixel(x + kx, y + ky);
+            sum += pixel * kernel[ky + kernelOffset][kx + kernelOffset];
+          }
+        }
+        newProcessor.putPixel(x, y, sum / kernelDivisor);
+      }
+    }
+
+    return newProcessor;
   }
+
   }
 
