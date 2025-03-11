@@ -30,7 +30,7 @@ public class Combine_channels_ implements PlugIn {
         if (gd.wasCanceled()) {
             return;
         }
-
+        
         String title_Red = gd.getNextChoice();
         String title_Green = gd.getNextChoice();
         String title_Blue = gd.getNextChoice();
@@ -38,7 +38,7 @@ public class Combine_channels_ implements PlugIn {
         ImagePlus image_Red = null;
         ImagePlus image_Green = null;
         ImagePlus image_Blue = null;
-
+        
         for (int i = 0; i < ids.length; i++) {
             ImagePlus imp = WindowManager.getImage(ids[i]);
             if (imp.getTitle().equals(title_Red)) {

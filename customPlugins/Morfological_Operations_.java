@@ -28,9 +28,9 @@ public class Morfological_Operations_ implements PlugIn {
 
     GenericDialog gd = new GenericDialog("Choose an Image");
     gd.addChoice("Image", imageTitles, imageTitles[0]);
-    String[] items = { "Dilate", "Erode", "Opening", "Closing" };
+    String[] items = { "Dilate", "Erode", "Opening", "Closing" ,"Border"};
     gd.addRadioButtonGroup("Test", items, 3, 1, "0");
-    gd.addCheckbox("Create new image", false);
+    gd.addCheckbox("Create new image", true);
     gd.showDialog();
 
     if (gd.wasCanceled()) {
@@ -49,9 +49,9 @@ public class Morfological_Operations_ implements PlugIn {
     ImageProcessor processor = image.getProcessor();
     ImageProcessor newProcessor = processor.duplicate();
 
-    int[][] dilateElement = { { 1, 1, 1 }, { 1, 1, 1 }, { 1, 1, 1 } };
+    int[][] dilateElement = { { 1, 1, 1 , 1},{ 1, 1, 1 , 1},{ 1, 1, 1 , 1},{ 1, 1, 1 , 1} };
 
-    int[][] erodeElement = { { 0, 1, 0 }, { 1, 0, 1 }, { 0, 1, 0 } };
+    int[][] erodeElement = { { 0, 1, 0 }, { 1, 1, 1 }, { 0, 1, 0 } };
 
     switch (answer) {
       case "Dilate":
@@ -65,10 +65,16 @@ public class Morfological_Operations_ implements PlugIn {
       case "Opening":
         newProcessor = Erode(newProcessor, erodeElement);
         newProcessor = Dilate(newProcessor, dilateElement);
+        break;
 
       case "Closing":
         newProcessor = Dilate(newProcessor, dilateElement);
         newProcessor = Erode(newProcessor, erodeElement);
+        break;
+
+      case "Border":
+        newProcessor = Border(newProcessor, erodeElement);
+        break;
 
       default:
         break;
@@ -132,6 +138,21 @@ public class Morfological_Operations_ implements PlugIn {
         if (sum == structuringElementSum) {
           newProcessor.putPixel(x, y, 255);
         }
+      }
+    }
+
+    return newProcessor;
+  }
+
+  public ImageProcessor Border(ImageProcessor processor, int[][] structuringElement) {
+    ImageProcessor erodedProcessor = Erode(processor, structuringElement);
+    ImageProcessor newProcessor = new ByteProcessor(this.width, this.height);
+
+    for (int y = 0; y < this.height; y++) {
+      for (int x = 0; x < this.width; x++) {
+        int originalValue = processor.getPixel(x, y);
+        int erodedValue = erodedProcessor.getPixel(x, y);
+        newProcessor.putPixel(x, y, originalValue - erodedValue);
       }
     }
 
