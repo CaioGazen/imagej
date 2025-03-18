@@ -32,7 +32,7 @@
         <pathelement path="${build.dir}" />
       </classpath>
     </javac>
-    <java maxmemory="640m" jar="${jarfile}" fork="yes" />
+    <java jar="${jarfile}" fork="yes" />
   </target>
 
   <target name="build" depends="compile-plugins" description="Build ij.jar.">
@@ -59,7 +59,7 @@
 
   <target name="run" depends="build" description="Build and run ImageJ.">
     <copy file="${jarfile}" toDir=".." />
-    <java maxmemory="640m" jar="${jarfile}" fork="yes" />
+    <java jar="${jarfile}" fork="yes" />
   </target>
 
 
