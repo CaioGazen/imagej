@@ -32,7 +32,7 @@
         <pathelement path="${build.dir}" />
       </classpath>
     </javac>
-    <java jar="${jarfile}" fork="yes" />
+    <java maxmemory="2500m" jar="${jarfile}" fork="yes" />
   </target>
 
   <target name="build" depends="compile-plugins" description="Build ij.jar.">

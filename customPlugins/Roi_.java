@@ -26,9 +26,6 @@ public class Roi_ implements PlugIn {
     String inputFolder = gd.getNextString();
     String outputFolder = gd.getNextString();
 
-    int maxWidth = 0;
-    int maxHeight = 0;
-
     System.out.println("Input Folder: " + inputFolder);
 
     for (File file : new File(inputFolder).listFiles()) {
@@ -47,7 +44,7 @@ public class Roi_ implements PlugIn {
 
       RoiManager rm = RoiManager.getInstance();
 
-      ipDup.cropAndSave(rm.getRoisAsArray(), outputFolder, "show");
+      ipDup.cropAndSave(rm.getRoisAsArray(), outputFolder, "png");
 
       rm.reset();
     }
