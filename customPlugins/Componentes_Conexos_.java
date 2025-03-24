@@ -81,63 +81,65 @@ public class Componentes_Conexos_ implements PlugIn {
     ImageProcessor newProcessor = new ByteProcessor(this.width, this.height);
     int label = 1;
 
-    Queue<Integer> fifo = new LinkedList<Integer>();
+    Queue<Integer> fifo = new LinkedList<Integer>(); // Cria fifo
 
     for (int y = 0; y < this.height; y++) {
-      for (int x = 0; x < this.width; x++) {
-        int pixel = processor.getPixel(x, y);
+      for (int x = 0; x < this.width; x++) { // Percorre a imagem
+        int pixel = processor.getPixel(x, y); // valor do pixel da imagem
 
-        if (pixel == 0 | newProcessor.getPixel(x, y) != 0) {
+        if (pixel == 0 | newProcessor.getPixel(x, y) != 0) { // Verifica se o pixel for preto ou ja tiver uma label
           continue;
         }
 
-        newProcessor.putPixel(x, y, label);
+        newProcessor.putPixel(x, y, label); // Coloca a label no primeiro pixel ainda não visitado do ojeto
 
         fifo.add(x);
-        fifo.add(y);
+        fifo.add(y); // Adiciona o pixel na fila
 
-        while (!fifo.isEmpty()) {
+        while (!fifo.isEmpty()) { // Enquanto a fila não estiver vazia
           int x1 = fifo.remove();
-          int y1 = fifo.remove();
+          int y1 = fifo.remove(); // Pega o pixel da fila
 
-          for (int ky = -structuringElementOffset; ky <= structuringElementOffset; ky++) {
-            if (y < 0 | y > this.height) {
+          for (int ky = -structuringElementOffset; ky <= structuringElementOffset; ky++) { // Percorre o elemento
+                                                                                           // estruturante
+            if (y < 0 | y > this.height) { // verifica se o pixel está dentro da imagem
               continue;
             }
 
             for (int kx = -structuringElementOffset; kx <= structuringElementOffset; kx++) {
-              if (x < 0 | x > this.width) {
+              if (x < 0 | x > this.width) { // verifica se o pixel está dentro da imagem
                 continue;
               }
+
               if (structuringElement[ky + structuringElementOffset][kx + structuringElementOffset] == 0) {
+                continue; // verifica se o pixel do elemento estruturante é 0
+              }
+
+              int adjacentPixelLabel = newProcessor.getPixel(x1 + kx, y1 + ky); // Pega a label pixel adjacente
+
+              if (adjacentPixelLabel != 0) { // Verifica se o pixel adjacente já tem uma label
                 continue;
               }
 
-              int adjacentPixelLabel = newProcessor.getPixel(x1 + kx, y1 + ky);
+              int adjacentPixel = processor.getPixel(x1 + kx, y1 + ky); // pegar o valor do pixel adjacente
 
-              if (adjacentPixelLabel != 0) {
-                continue;
-              }
-
-              int adjacentPixel = processor.getPixel(x1 + kx, y1 + ky);
-
-              if (pixel == adjacentPixel) {
-                newProcessor.putPixel(x1 + kx, y1 + ky, label);
+              if (pixel == adjacentPixel) { // verifica se o pixel tem o mesmo valor do pixel adjacente
+                newProcessor.putPixel(x1 + kx, y1 + ky, label); // coloca a label no pixel adjacente
                 fifo.add(x1 + kx);
-                fifo.add(y1 + ky);
+                fifo.add(y1 + ky); // adiciona o pixel adjacente na fila
               }
             }
           }
         }
 
-        label += 10;
+        label += 10; // incrementa a label
       }
     }
 
     return newProcessor;
   }
 
-  private LUT createCustomLUT() {
+  private LUT createCustomLUT() { // lut para ajudar na visualização dos componentes conexos
     byte[] reds = new byte[256];
     byte[] greens = new byte[256];
     byte[] blues = new byte[256];
