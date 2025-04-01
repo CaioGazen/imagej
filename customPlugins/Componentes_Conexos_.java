@@ -132,7 +132,8 @@ public class Componentes_Conexos_ implements PlugIn {
           }
         }
 
-        label += 10; // incrementa a label
+        label += 5; // incrementa a label
+        if (label > 255) label = label - 254;
       }
     }
 
