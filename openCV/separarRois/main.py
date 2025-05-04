@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-image_filename = "arvores17.jpg"
+image_filename = "/home/civ/imagej/hotwheels/src/Blue_beach_bomb.jpg"
 
 imagem = cv2.imread(image_filename)
 imagemCinza = cv2.cvtColor(imagem, cv2.COLOR_BGR2GRAY)
