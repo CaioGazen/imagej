@@ -75,10 +75,10 @@ for image_filename in image_files:
     # aplicando a operação de erosao
     imagemErosao = cv2.erode(imagemFechamento, kernel, iterations=1)
 
-    cv2.imshow("Imagem binarizada", imagemErosao)
+    cv2.imshow("Imagem binarizada", imagemBinaria)
 
     # identificando as regiões conectadas
-    _, labels = cv2.connectedComponents(imagemErosao, connectivity=8)
+    _, labels = cv2.connectedComponents(imagemBinaria, connectivity=8)
 
     # definindo o número de componentes conectados
     num_labels = np.max(labels) + 1
