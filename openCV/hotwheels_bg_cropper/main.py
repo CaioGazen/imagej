@@ -1,9 +1,10 @@
 import cv2
 import numpy as np
 import os
+import time
 
-input_folder = "/home/civ/imagej/hotwheels/src/"
-output_folder = "/home/civ/imagej/hotwheels/output_rois/"
+input_folder = "src/"
+output_folder = "output/"
 
 target_max_dim = 300  # Pixels - adjust this value
 
@@ -30,6 +31,9 @@ if not image_files:
 
 print(f"Found {len(image_files)} images to process.")
 
+n_images = len(image_files)
+n_images_processed = 0
+start_time = time.time()
 
 # --- Process each image in the folder ---
 for image_filename in image_files:
@@ -175,3 +179,11 @@ for image_filename in image_files:
     # but the request is for a black background, which bitwise_and provides directly in BGR.
     cv2.imwrite(output_masked_path, output_image)
     print(f"  Saved masked image to '{output_masked_path}'")
+
+    n_images_processed += 1
+
+    now = time.time()
+
+    print(
+        f"Processed {n_images_processed}/{n_images} images. {n_images_processed/n_images}% Elapsed time: {now - start_time:.2f} seconds  ETA: {(now - start_time) / n_images_processed * (n_images - n_images_processed):.2f} seconds"
+    )
