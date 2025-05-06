@@ -1,0 +1,177 @@
+import cv2
+import numpy as np
+import os
+
+input_folder = "/home/civ/imagej/hotwheels/src/"
+output_folder = "/home/civ/imagej/hotwheels/output_rois/"
+
+target_max_dim = 300  # Pixels - adjust this value
+
+# --- Create output folder if it doesn't exist ---
+os.makedirs(output_folder, exist_ok=True)
+print(f"Output folder '{output_folder}' ensured.")
+
+
+# ---  lista de todas as imagens   ---
+# Definir extencoes comun
+image_extensions = [".jpg", ".jpeg", ".png", ".bmp", ".tiff"]
+image_files = [
+    f
+    for f in os.listdir(input_folder)
+    if os.path.splitext(f)[1].lower() in image_extensions
+]
+
+if not image_files:
+    print(
+        f"No image files found with extensions {image_extensions} in '{input_folder}'. Exiting."
+    )
+    exit()
+
+
+print(f"Found {len(image_files)} images to process.")
+
+
+# --- Process each image in the folder ---
+for image_filename in image_files:
+    full_image_path = os.path.join(input_folder, image_filename)
+    print(f"\nProcessing image: {image_filename}")
+
+    # --- Load image ---
+    imagem_original = cv2.imread(full_image_path)
+    if imagem_original is None:
+        print(f"Warning: Could not read image '{image_filename}'. Skipping.")
+        continue
+
+    original_height, original_width = imagem_original.shape[:2]
+    max_original_dim = max(original_height, original_width)
+
+    # --- Determine Scaling Factor and Scale Down Image if needed ---
+    scale_factor = 1.0  # Default is no scaling
+    imagem_scaled = imagem_original  # Start assuming no scaling
+
+    if max_original_dim > target_max_dim:
+        scale_factor = target_max_dim / max_original_dim
+        scaled_width = int(original_width * scale_factor)
+        scaled_height = int(original_height * scale_factor)
+
+        print(f"  Original size: ({original_width}x{original_height})")
+        print(
+            f"  Scaling down by factor {scale_factor:.2f} to ({scaled_width}x{scaled_height})"
+        )
+        if scaled_width <= 0 or scaled_height <= 0:
+            print(
+                f"Warning: Calculated scaled dimensions were zero or negative for '{image_filename}'. Skipping scaling."
+            )
+            # Keep scale_factor as 1.0 if scaling would result in invalid dimensions
+            scale_factor = 1.0
+            scaled_width = original_width
+            scaled_height = original_height
+        else:
+            imagem_scaled = cv2.resize(
+                imagem_original,
+                (scaled_width, scaled_height),
+                interpolation=cv2.INTER_AREA,
+            )  # INTER_AREA good for shrinking
+            print(
+                f"  Scaled down by factor {scale_factor:.2f} to ({scaled_width}x{scaled_height}) for GrabCut."
+            )
+    else:
+        scaled_width = original_width
+        scaled_height = original_height
+        print(
+            f"  Image size ({original_width}x{original_height}) is within target, no scaling for GrabCut."
+        )
+
+    # --- Run GrabCut on the potentially scaled-down image ---
+    # Define the initial rectangle on the scaled image
+    # Assuming the car is centered, define a rectangle covering the central area
+    # Adjust these percentages (0.05 border) based on how much border is usually around your centered car
+    border_percentage = 0.05
+    rect_scaled = (
+        int(scaled_width * border_percentage),  # x
+        int(scaled_height * border_percentage),  # y
+        int(scaled_width * (1 - 2 * border_percentage)),  # width of rect
+        int(scaled_height * (1 - 2 * border_percentage)),  # height of rect
+    )
+
+    # Ensure the rectangle is valid (minimum 1x1 dimensions)
+    if rect_scaled[2] <= 0 or rect_scaled[3] <= 0:
+        print(
+            f"  Warning: Calculated GrabCut rectangle is invalid ({rect_scaled}) for '{image_filename}'. Cannot run GrabCut."
+        )
+        # Create an empty mask if rectangle is invalid, so bitwise_and results in black
+        grabcut_mask_original_size = np.zeros(
+            (original_height, original_width), dtype=np.uint8
+        )
+    else:
+        # Initialize mask, background and foreground models for GrabCut
+        mask_scaled = np.zeros(
+            imagem_scaled.shape[:2], np.uint8
+        )  # Mask initialized to zeros
+        bgdModel = np.zeros((1, 65), np.float64)  # Background model
+        fgdModel = np.zeros((1, 65), np.float64)  # Foreground model
+
+        # Run GrabCut with the initial rectangle on the scaled image
+        try:
+            # You might need more iterations depending on the image complexity
+            cv2.grabCut(
+                imagem_scaled,
+                mask_scaled,
+                rect_scaled,
+                bgdModel,
+                fgdModel,
+                5,
+                cv2.GC_INIT_WITH_RECT,
+            )
+
+            # --- Process the GrabCut mask ---
+            # Create a binary mask where 255 represents the foreground (GC_FGD or GC_PR_FGD)
+            # GrabCut labels: 0=GC_BGD, 1=GC_FGD, 2=GC_PR_BGD, 3=GC_PR_FGD
+            # We want labels 1 (definite foreground) and 3 (probable foreground)
+            grabcut_mask_scaled_binary = np.where(
+                (mask_scaled == cv2.GC_FGD) | (mask_scaled == cv2.GC_PR_FGD), 255, 0
+            ).astype("uint8")
+
+            # --- Resize the mask back to the original image size ---
+            # Use nearest neighbor interpolation to keep the mask binary (0 or 255)
+            grabcut_mask_original_size = cv2.resize(
+                grabcut_mask_scaled_binary,
+                (original_width, original_height),
+                interpolation=cv2.INTER_NEAREST,
+            )
+
+        except cv2.error as e:
+            print(
+                f"  Error running GrabCut on scaled image for '{image_filename}': {e}"
+            )
+            print("  Creating an empty mask.")
+            # Create an empty mask if GrabCut fails, so bitwise_and results in black
+            grabcut_mask_original_size = np.zeros(
+                (original_height, original_width), dtype=np.uint8
+            )
+        except Exception as e:  # Catch other potential errors
+            print(
+                f"  An unexpected error occurred during GrabCut for '{image_filename}': {e}"
+            )
+            print("  Creating an empty mask.")
+            # Create an empty mask if GrabCut fails
+            grabcut_mask_original_size = np.zeros(
+                (original_height, original_width), dtype=np.uint8
+            )
+
+    # 1. Create an all-white image of the same size as the original
+    white_background = np.full(imagem_original.shape, 255, dtype=imagem_original.dtype)
+
+    output_image = white_background  # Start with the white background
+    cv2.copyTo(imagem_original, grabcut_mask_original_size, output_image)
+    # --- Save the resulting image ---
+    # Get the base name of the image file without extension
+    base_filename = os.path.splitext(image_filename)[0]
+    # Save the masked image. Using a descriptive suffix.
+    output_masked_filename = f"{base_filename}_masked.png"  # PNG supports transparency better, but JPG is fine too.
+    output_masked_path = os.path.join(output_folder, output_masked_filename)
+
+    # Using imwrite with a 3-channel image and a mask is possible for saving with alpha channel (for transparency)
+    # but the request is for a black background, which bitwise_and provides directly in BGR.
+    cv2.imwrite(output_masked_path, output_image)
+    print(f"  Saved masked image to '{output_masked_path}'")
