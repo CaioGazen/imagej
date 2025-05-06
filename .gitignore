@@ -3,3 +3,5 @@ plugins/
 imagensArvores/arvoresOut/*
 venv/
 yolov5/
+downloaded_relevant_images/
+
