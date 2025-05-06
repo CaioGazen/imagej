@@ -6,3 +6,14 @@ yolov5/
 downloaded_relevant_images/
 openCV/hotwheels_bg_cropper/src
 openCV/hotwheels_bg_cropper/output
+imageDownloader/*
+!imageDownloader/*.py
+openCV/datasets/imagesSrc
+openCV/datasets/hotwheels
+openCV/datasets/imagesSrc
+openCV/datasets/backgroundSrc
+
+
+
+
+
