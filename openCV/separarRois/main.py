@@ -1,7 +1,16 @@
 import cv2
 import numpy as np
 
-image_filename = "/home/civ/imagej/hotwheels/src/Blue_beach_bomb.jpg"
+stepByStep = True
+
+
+def esperarProximaEtapa():
+    if stepByStep:
+        cv2.waitKey()
+        cv2.destroyAllWindows()
+
+
+image_filename = "arvores17.jpg"
 
 imagem = cv2.imread(image_filename)
 imagemCinza = cv2.cvtColor(imagem, cv2.COLOR_BGR2GRAY)
@@ -9,7 +18,12 @@ imagemCinza = cv2.cvtColor(imagem, cv2.COLOR_BGR2GRAY)
 
 cv2.imshow("Imagem Original", imagemCinza)
 
+esperarProximaEtapa()
+
+#
 # gausian blur
+#
+
 kernel_size = (15, 15)
 sigmaX = 0
 
@@ -17,10 +31,19 @@ imagemPasaBaixa = cv2.GaussianBlur(imagemCinza, kernel_size, sigmaX)
 
 cv2.imshow("Imagem gausian", imagemPasaBaixa)
 
+
+esperarProximaEtapa()
+
+#
 # aplicando a tecnica de Otsu
+#
 _, imagemBinaria = cv2.threshold(
     imagemPasaBaixa, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU
 )
+
+#
+# operações morfológicas
+#
 
 # definindo o tamanho do kernel para as operações morfológicas
 kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (7, 7))
@@ -35,10 +58,19 @@ imagemFechamento = cv2.morphologyEx(
 
 cv2.imshow("Imagem binarizada", imagemFechamento)
 
+esperarProximaEtapa()
+
+
+#
 # invertendo a imagem
+#
+
 imagemInvertida = cv2.bitwise_not(imagemFechamento)
 
+#
 # identificando as regiões conectadas
+#
+
 _, labels = cv2.connectedComponents(imagemInvertida, connectivity=8)
 
 # definindo o número de componentes conectados
@@ -67,7 +99,12 @@ for label in range(1, num_labels):
 
 cv2.imshow("Imagem com componentes conectados", componentes_cinzas)
 
+esperarProximaEtapa()
+
+#
 # Encontrando contornos
+#
+
 contornos, _ = cv2.findContours(
     componentes_cinzas, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
 )
@@ -99,6 +136,11 @@ for i, contorno in enumerate(contornos):
 # mostrando os contornos
 cv2.imshow("Contornos", contours_image)
 
+esperarProximaEtapa()
+
+#
+# Salvando os contornos
+#
 
 for i, contorno in enumerate(contornos):
     # obtem o bounding box do retangulo
@@ -110,6 +152,8 @@ for i, contorno in enumerate(contornos):
 
     cv2.imshow(f"ROI {i + 1}", roi)
 
-
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+while True:
+    k = cv2.waitKey(0)
+    if k == 27:
+        cv2.destroyAllWindows()
+        break
