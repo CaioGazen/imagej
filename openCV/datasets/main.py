@@ -5,7 +5,7 @@ import random
 
 # --- Configuração ---
 BACKGROUNDS_DIR = "backgroundSrc"  # Diretório contendo as imagens de fundo
-OBJECTS_DIR = "imagesSrc"  # Diretório contendo as imagens de objetos segmentados (com canal alfa ou fundo branco)
+OBJECTS_DIR = "imagesSrc"  # Diretório contendo as imagens de objetos segmentados
 OUTPUT_DIR = "hotwheels"  # Diretório de saída base
 OUTPUT_IMAGES_DIR = os.path.join(
     OUTPUT_DIR, "images"
@@ -14,13 +14,15 @@ OUTPUT_LABELS_DIR = os.path.join(
     OUTPUT_DIR, "labels"
 )  # Diretório de saída para os rótulos YOLO
 
-NUM_IMAGES_TO_GENERATE = 180
+NUM_IMAGES_TO_GENERATE = 360
 NUM_OBJECTS_PER_IMAGE = 3
 CLASS_ID = 0  # ID da classe YOLO para o objeto (0 para 'hotwheel')
 
 # Dimensões da imagem de destino (assumido do prompt)
 IMG_WIDTH = 1024
 IMG_HEIGHT = 768
+
+target_max_dim = 300
 
 
 # --- Função Auxiliar para Mistura ---
@@ -106,7 +108,7 @@ def generate_images(number_of_images, folderName):
         selected_objects_paths = random.choices(object_files, k=NUM_OBJECTS_PER_IMAGE)
 
         for obj_path in selected_objects_paths:
-            obj_img = cv2.imread(obj_path)  # Tentar ler
+            obj_img = cv2.imread(obj_path, cv2.IMREAD_COLOR)  # Tentar ler
 
             if obj_img is None:
                 print(
@@ -122,6 +124,34 @@ def generate_images(number_of_images, folderName):
                 continue
 
             obj_h, obj_w = obj_img.shape[:2]
+            max_original_dim = max(obj_h, obj_w)
+
+            # --- Determine Scaling Factor and Scale Down Image if needed ---
+            scale_factor = 1.0  # Default is no scaling
+
+            if max_original_dim > target_max_dim:
+                scale_factor = target_max_dim / max_original_dim
+                scaled_width = int(obj_w * scale_factor)
+                scaled_height = int(obj_h * scale_factor)
+
+                # print(f" Tamanho Original: ({obj_w}x{obj_h})")
+                # print(
+                #     f" Redimensionando por {scale_factor:.2f} para ({scaled_width}x{scaled_height})"
+                # )
+                if scaled_width <= 0 or scaled_height <= 0:
+                    print(
+                        f"Warning: Calculated scaled dimensions were zero or negative for '{obj_path}'. Skipping scaling."
+                    )
+                    # Keep scale_factor as 1.0 if scaling would result in invalid dimensions
+                    scale_factor = 1.0
+                else:
+                    obj_img = cv2.resize(
+                        obj_img,
+                        (scaled_width, scaled_height),
+                        interpolation=cv2.INTER_AREA,
+                    )
+                    obj_w = scaled_width
+                    obj_h = scaled_height
 
             # Garantir que o objeto não seja maior que o fundo
             if obj_w > IMG_WIDTH or obj_h > IMG_HEIGHT:
@@ -193,12 +223,12 @@ if __name__ == "__main__":
     background_files = [
         os.path.join(BACKGROUNDS_DIR, f)
         for f in os.listdir(BACKGROUNDS_DIR)
-        if f.lower().endswith((".png", ".jpg", ".jpeg", ".bmp"))
+        if f.lower().endswith((".png", ".jpg", ".jpeg", ".bmp", ".webp"))
     ]
     object_files = [
         os.path.join(OBJECTS_DIR, f)
         for f in os.listdir(OBJECTS_DIR)
-        if f.lower().endswith((".png", ".jpg", ".jpeg", ".bmp"))
+        if f.lower().endswith((".png", ".jpg", ".jpeg", ".bmp", ".webp"))
     ]
 
     if not background_files:
@@ -212,7 +242,7 @@ if __name__ == "__main__":
     print(f"Encontradas {len(object_files)} imagens de objeto.")
 
     generate_images(NUM_IMAGES_TO_GENERATE, "train")
-    generate_images(20, "val")
+    generate_images(80, "val")
 
     generated_data_yml()
 
