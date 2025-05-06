@@ -6,15 +6,15 @@ import time
 input_folder = "src/"
 output_folder = "output/"
 
-target_max_dim = 300  # Pixels - adjust this value
+target_max_dim = 300  # value for resizing the image to speed up GrabCut
 
 # --- Create output folder if it doesn't exist ---
 os.makedirs(output_folder, exist_ok=True)
 print(f"Output folder '{output_folder}' ensured.")
 
 
-# ---  lista de todas as imagens   ---
-# Definir extencoes comun
+# ---  list all images
+# Defining image extensions to look for
 image_extensions = [".jpg", ".jpeg", ".png", ".bmp", ".tiff"]
 image_files = [
     f
@@ -75,7 +75,7 @@ for image_filename in image_files:
                 imagem_original,
                 (scaled_width, scaled_height),
                 interpolation=cv2.INTER_AREA,
-            )  # INTER_AREA good for shrinking
+            )
             print(
                 f"  Scaled down by factor {scale_factor:.2f} to ({scaled_width}x{scaled_height}) for GrabCut."
             )
@@ -89,7 +89,7 @@ for image_filename in image_files:
     # --- Run GrabCut on the potentially scaled-down image ---
     # Define the initial rectangle on the scaled image
     # Assuming the car is centered, define a rectangle covering the central area
-    # Adjust these percentages (0.05 border) based on how much border is usually around your centered car
+    # Adjust these percentages (0.05 border) based on how much border is usually around the centered car
     border_percentage = 0.05
     rect_scaled = (
         int(scaled_width * border_percentage),  # x
@@ -103,10 +103,7 @@ for image_filename in image_files:
         print(
             f"  Warning: Calculated GrabCut rectangle is invalid ({rect_scaled}) for '{image_filename}'. Cannot run GrabCut."
         )
-        # Create an empty mask if rectangle is invalid, so bitwise_and results in black
-        grabcut_mask_original_size = np.zeros(
-            (original_height, original_width), dtype=np.uint8
-        )
+        continue
     else:
         # Initialize mask, background and foreground models for GrabCut
         mask_scaled = np.zeros(
@@ -146,37 +143,31 @@ for image_filename in image_files:
 
         except cv2.error as e:
             print(
-                f"  Error running GrabCut on scaled image for '{image_filename}': {e}"
+                f"  CV2 Error running GrabCut on scaled image for '{image_filename}': {e}"
             )
-            print("  Creating an empty mask.")
-            # Create an empty mask if GrabCut fails, so bitwise_and results in black
-            grabcut_mask_original_size = np.zeros(
-                (original_height, original_width), dtype=np.uint8
-            )
+            continue
+
         except Exception as e:  # Catch other potential errors
             print(
                 f"  An unexpected error occurred during GrabCut for '{image_filename}': {e}"
             )
-            print("  Creating an empty mask.")
-            # Create an empty mask if GrabCut fails
-            grabcut_mask_original_size = np.zeros(
-                (original_height, original_width), dtype=np.uint8
-            )
+
+            continue
 
     # 1. Create an all-white image of the same size as the original
     white_background = np.full(imagem_original.shape, 255, dtype=imagem_original.dtype)
 
     output_image = white_background  # Start with the white background
     cv2.copyTo(imagem_original, grabcut_mask_original_size, output_image)
+
     # --- Save the resulting image ---
     # Get the base name of the image file without extension
     base_filename = os.path.splitext(image_filename)[0]
     # Save the masked image. Using a descriptive suffix.
-    output_masked_filename = f"{base_filename}_masked.png"  # PNG supports transparency better, but JPG is fine too.
+    output_masked_filename = f"{base_filename}_masked.png"
     output_masked_path = os.path.join(output_folder, output_masked_filename)
 
     # Using imwrite with a 3-channel image and a mask is possible for saving with alpha channel (for transparency)
-    # but the request is for a black background, which bitwise_and provides directly in BGR.
     cv2.imwrite(output_masked_path, output_image)
     print(f"  Saved masked image to '{output_masked_path}'")
 

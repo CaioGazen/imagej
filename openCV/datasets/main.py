@@ -126,8 +126,7 @@ def generate_images(number_of_images, folderName):
             obj_h, obj_w = obj_img.shape[:2]
             max_original_dim = max(obj_h, obj_w)
 
-            # --- Determine Scaling Factor and Scale Down Image if needed ---
-            scale_factor = 1.0  # Default is no scaling
+            # --- Determina Fator e escala a Imagem se necessário ---
 
             if max_original_dim > target_max_dim:
                 scale_factor = target_max_dim / max_original_dim
@@ -142,8 +141,6 @@ def generate_images(number_of_images, folderName):
                     print(
                         f"Warning: Calculated scaled dimensions were zero or negative for '{obj_path}'. Skipping scaling."
                     )
-                    # Keep scale_factor as 1.0 if scaling would result in invalid dimensions
-                    scale_factor = 1.0
                 else:
                     obj_img = cv2.resize(
                         obj_img,
