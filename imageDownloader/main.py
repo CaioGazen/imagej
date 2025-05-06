@@ -17,7 +17,7 @@ download_folder = "downloaded_relevant_images"
 target_attribute = "data-relevant"
 target_values = ["0", "1"]  # List of allowed values
 required_parent_classes = ["mw-file-description", "image"]
-num_worker_threads = 10  # Adjust based on your network and CPU
+num_worker_threads = 500  # Adjust based on your network and CPU
 
 # Use a User-Agent header to mimic a browser, some sites block simple scripts
 headers = {
